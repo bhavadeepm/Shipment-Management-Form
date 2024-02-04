@@ -1,321 +1,118 @@
+<?php
+$host = 'localhost';
+$dbname = 'shipment_db';
+$username = 'root';
+$password = '';
+
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        $shipmentNo = $_POST['shipmentNo'];
+        $description = $_POST['description'];
+        $source = $_POST['source'];
+        $destination = $_POST['destination'];
+        $shippingDate = $_POST['shippingDate'];
+        $expectedDeliveryDate = $_POST['expectedDeliveryDate'];
+
+        $sql = "INSERT INTO SHIPMENT_TABLE (SHIPMENT_NO, DESCRIPTION, SOURCE, DESTINATION, SHIPPING_DATE, EXPECTED_DELIVERY_DATE) 
+                VALUES (:shipmentNo, :description, :source, :destination, :shippingDate, :expectedDeliveryDate)";
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindParam(':shipmentNo', $shipmentNo);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':source', $source);
+        $stmt->bindParam(':destination', $destination);
+        $stmt->bindParam(':shippingDate', $shippingDate);
+        $stmt->bindParam(':expectedDeliveryDate', $expectedDeliveryDate);
+
+        $stmt->execute();
+
+        echo "Shipment data saved successfully";
+    }
+} catch (PDOException $e) {
+    echo "Error: " . $e->getMessage();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shipment Management Form</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" />
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/js/bootstrap.min.js"></script>
-  <script src="http://login2explore.com/jpdb/resources/js/0.0.3/jpdb-commons.js"></script>
-  <style>
-    .form-control-sm label {
-      font-weight: 600;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shipment Management Form</title>
+<style>
+    form {
+        max-width: 400px;
+        margin: 0 auto;
     }
-
-    textarea {
-      resize: none;
-      font-family: Georgia, "Times New Roman", Times, serif;
+    .form-group {
+        margin-bottom: 1rem;
     }
-
-    textarea::-webkit-scrollbar {
-      width: 0.3em;
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
     }
-
-    textarea::-webkit-scrollbar-track {
-      -webkit-box-shadow: inset 0 0 7px rgb(188, 180, 180);
+    input[type="text"], input[type="date"] {
+        width: 100%;
+        padding: 0.5rem;
+        border-radius: 5px;
+        border: 1px solid #ccc;
     }
-
-    textarea::-webkit-scrollbar-thumb {
-      border-radius: 30px;
-      background-color: rgb(0, 0, 0);
+    input[type="submit"], button {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: #fff;
+        cursor: pointer;
     }
-
-    .form-control-sm input textarea {
-      border-bottom-style: 2px solid black;
-      box-shadow: 0px 0px 10px 0.5px rgba(0, 0, 0, 0.2);
-      width: 20rem;
+    button {
+        margin-left: 1rem;
+        background-color: #dc3545;
     }
-
-    .form-control:focus {
-      box-shadow: 0px 0px 10px 0.5px rgba(0, 0, 0, 0.2);
-      border: 0.5px solid rgba(1, 10, 18, 40);
-      outline: none;
-    }
-
-    .container-fluid {
-      margin-top: 2rem;
-      max-width: fit-content;
-      border-radius: 10px;
-      box-shadow: 0px 0px 2px 1px rgba(73, 70, 70, 0.6);
-    }
-
-    h5 {
-      text-align: center;
-      text-decoration: underline;
-    }
-
-    .btn {
-      padding: 5px 20px;
-      border-radius: 50px;
-      font-size: medium;
-    }
-
-    .form-border input textarea {
-      color: black;
-      width: fit-content;
-    }
-
-    .form-border {
-      border-radius: 20px;
-      padding: 5px 15px;
-    }
-
-    .btn :active {
-      transform: scale(0.9);
-    }
-
-    .btn :focus {
-      transition: all 0.6s ease-in-out;
-      border-color: transparent;
-    }
-
-    .btn:hover {
-      color: rgb(0, 0, 0);
-    }
-  </style>
+</style>
 </head>
 <body>
-  <div class="container-fluid">
-    <div class="form-control-sm">
-      <form class="form-border" id="shipForm" method="get">
-        <h5>Shipment Management Form</h5>
-        <br />
-        <div class="form-group">
-          <label for="ship-no">Shipment Number:</label>
-          <input
-            type="number"
-            class="form-control"
-            id="ship-no"
-            onchange="getShipNo()"
-            aria-required="false"
-          />
-        </div>
-        <div class="form-group">
-          <label for="description">Description:</label>
-          <textarea class="form-control" id="description" rows="2" required></textarea>
-        </div>
-        <div class="form-group">
-          <label for="source">Source:</label>
-          <input type="text" class="form-control" id="source" required />
-        </div>
-        <div class="form-group">
-          <label for="destination">Destination:</label>
-          <input type="text" class="form-control" id="destination" required />
-        </div>
-        <div class="form-group">
-          <label for="shipping-date">Shipping Date:</label>
-          <input
-            type="date"
-            class="form-control"
-            id="shipping-date"
-            required
-          />
-        </div>
-        <div class="form-group">
-          <label for="expected-date">Expected Delivery Date:</label>
-          <input
-            type="date"
-            id="datetype"
-            class="form-control"
-            id="expected-date"
-            required
-          />
-        </div>
-        <div class="form-group text-center">
-          <button
-            type="submit"
-            class="btn btn-primary"
-            id="save"
-            onclick="saveData()"
-            disabled
-          >
-            Save
-          </button>
-          <button
-            type="submit"
-            class="btn btn-primary"
-            id="change"
-            onclick="changeData()"
-            disabled
-          >
-            Change
-          </button>
-          <button
-            type="submit"
-            class="btn btn-primary"
-            id="reset"
-            onclick="resetData()"
-            disabled
-          >
-            Reset
-          </button>
-        </div>
-      </form>
+
+<form id="shipmentForm" method="post">
+    <div class="form-group">
+        <label for="shipmentNo">Shipment No.:</label>
+        <input type="text" id="shipmentNo" name="shipmentNo" required>
     </div>
-  </div>
+    <div class="form-group">
+        <label for="description">Description:</label>
+        <input type="text" id="description" name="description" required>
+    </div>
+    <div class="form-group">
+        <label for="source">Source:</label>
+        <input type="text" id="source" name="source" required>
+    </div>
+    <div class="form-group">
+        <label for="destination">Destination:</label>
+        <input type="text" id="destination" name="destination" required>
+    </div>
+    <div class="form-group">
+        <label for="shippingDate">Shipping Date:</label>
+        <input type="date" id="shippingDate" name="shippingDate" required>
+    </div>
+    <div class="form-group">
+        <label for="expectedDeliveryDate">Expected Delivery Date:</label>
+        <input type="date" id="expectedDeliveryDate" name="expectedDeliveryDate" required>
+    </div>
+    <input type="submit" value="Save" id="saveBtn">
+    <button type="button" id="updateBtn" disabled>Update</button>
+    <button type="button" id="resetBtn">Reset</button>
+</form>
 
-  <script>
-    function resetData() {
-      $('#ship-no').val('');
-      $('#description').val('');
-      $('#source').val('');
-      $('#destination').val('');
-      $('#shipping-date').val('');
-      $('#expected-date').val('');
-      $('#ship-no').prop('disabled', false);
-      $('#save').prop('disabled', true);
-      $('#change').prop('disabled', true);
-      $('#reset').prop('disabled', true);
-      $('#ship-no').focus();
-    }
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            document.getElementById("shipmentForm").reset();
+        });
+    });
+</script>
 
-
-    function validateData() {
-      var ship_no, description, source, destination, shipping_date, expected_date;
-      ship_no = $('#ship-no').val();
-      description = $('#description').val();
-      source = $('#source').val();
-      destination = $('#destination').val();
-      shipping_date = $('#shipping-date').val();
-      expected_date = $('#expected-date').val();
-      if (ship_no === '') {
-        $('#ship-no').focus();
-        return "";
-      }
-      if (description === '') {
-        $('#description').focus();
-        return "";
-      }
-      if (source === '') {
-        $('#source').focus();
-        return "";
-      }
-      if (destination === '') {
-        $('#destination').focus();
-        return "";
-      }
-      if (shipping_date === '') {
-        $('#shipping-date').focus();
-        return "";
-      }
-      if (expected_date === '') {
-        $('#expected-date').focus();
-        return "";
-      }
-
-      var jsonStrObj = {
-        ship_id: ship_no,
-        description: description,
-        source: source,
-        destination: destination,
-        shipping_date: shipping_date,
-        expected_date: expected_date
-      }
-      return JSON.stringify(jsonStrObj);
-    }
-
-    function saveData() {
-      var jsonStrObj = validateData();
-      if (jsonStrObj === "") return "";
-      var PUTrequest = createPUTRequest(token, jsonStrObj, dbName, relName);
-      jQuery.ajaxSetup({
-        async: false
-      });
-      var resJsonObj = executeCommandAtGivenBaseUrl(PUTrequest, baseURL, jpdbIML);
-      jQuery.ajaxSetup({
-        async: true
-      });
-      console.log(resJsonObj);
-      resetData();
-      $('#ship-no').focus();
-      alert("Shipment Details Saved!");
-    }
-
-
-    function changeData() {
-      $('#change').prop('disabled', true);
-      jsonChange = validateData();
-      var updateRequest = createUPDATERecordRequest(token, jsonChange, dbName, relName, localStorage.getItem('shiprecno'));
-      jQuery.ajaxSetup({
-        async: false
-      });
-      var resJsonObj = executeCommandAtGivenBaseUrl(updateRequest, baseURL, jpdbIML);
-      jQuery.ajaxSetup({
-        async: true
-      });
-      console.log(resJsonObj);
-      resetData();
-      $('#ship-no').focus();
-    }
-
-    function getShipNo() {
-      var shipNoJsonObj = getShipNoAsJsonObj();
-      var getRequest = createGET_BY_KEYRequest(token, dbName, relName, shipNoJsonObj);
-      jQuery.ajaxSetup({
-        async: false
-      });
-      var resJsonObj = executeCommandAtGivenBaseUrl(getRequest, baseURL, jpdbIRL);
-      jQuery.ajaxSetup({
-        async: true
-      });
-      if (resJsonObj.status === 400) {
-        $('#save').prop('disabled', false);
-        $('#reset').prop('disabled', false);
-        $('#description').focus();
-      } else if (resJsonObj.status === 200) {
-        $('#ship-no').prop('disabled', true);
-        fillData(resJsonObj);
-        $('#change').prop('disabled', false);
-        $('#reset').prop('disabled', false);
-        $('#description').focus();
-      }
-    }
-
-
-
-    function fillData(jsonObj) {
-      saveRecNo2LS(jsonObj);
-      var record = JSON.parse(jsonObj.data).record;
-      $('#description').val(record.description);
-      $('#source').val(record.source);
-      $('#destination').val(record.destination);
-      $('#shipping-date').val(record.shipping_date);
-      $('#expected-date').val(record.expected_date);
-    }
-
-
-
-    var token = "90932894|-31949282449142997|90948008";
-    var dbName = "DELIVERY-DB";
-    var relName = "SHIPMENT-TABLE";
-    var jpdbIRL = "/api/irl";
-    var jpdbIML = "/api/iml";
-    var baseURL = "http://api.login2explore.com:5577";
-
-    function saveRecNo2LS(jsonObj) {
-      var lvData = JSON.parse(jsonObj.data);
-      localStorage.setItem('shiprecno', lvData.rec_no);
-    }
-
-    function getShipNoAsJsonObj() {
-      var shipno = $('#ship-no').val();
-      var jsonId = {
-        ship_id: shipno
-      }
-      return JSON.stringify(jsonId);
-    }
-  </script>
 </body>
 </html>
